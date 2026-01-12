@@ -3,11 +3,11 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04  # Use a stable version
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt update
           sudo apt install -y python3-pip build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
@@ -15,7 +15,14 @@ jobs:
           pip3 install --user --upgrade buildozer
 
       - name: Build with Buildozer
+        working-directory: chatbot
         run: |
-          # The --user flag ensures we don't hit permission errors
           export PATH=$PATH:$HOME/.local/bin
+          # This command creates the APK inside the chatbot/bin folder
           buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: UOK-Chatbot-APK
+          path: chatbot/bin/*.apk
