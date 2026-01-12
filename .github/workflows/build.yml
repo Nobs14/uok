@@ -1,0 +1,62 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '8'
+
+    - name: Install system dependencies
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo apt update
+        sudo apt install -y python3 python3-pip build-essential git libffi-dev libssl-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libsqlite3-dev libreadline-dev libbz2-dev libexpat1-dev liblzma-dev tk-dev openjdk-8-jdk libc6-dev-i386
+
+    - name: Install Buildozer
+      run: |
+        pip3 install buildozer
+
+    - name: Install Cython
+      run: |
+        pip3 install cython
+
+    - name: Setup Buildozer
+      run: |
+        buildozer init || echo "buildozer.spec already exists"
+        buildozer android update
+
+    - name: Install Android Build Tools
+      run: |
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0"
+
+    - name: Accept Android SDK licenses
+      run: |
+        echo y | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+    - name: Build APK
+      run: |
+        buildozer android debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: uok-faq-bot-apk
+        path: bin/*.apk
